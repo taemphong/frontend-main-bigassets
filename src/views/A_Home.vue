@@ -23,5 +23,4 @@
 import Layout from '@/components/AssetsLayout.vue';
 
 
-
 </script>

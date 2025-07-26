@@ -56,15 +56,23 @@
         </v-list-item-icon>
     </v-list-item>
     </v-col>
-    <v-col cols="6" >
-        <h4 class="mt-2"> รอ api</h4>
-        <p style="font-size: 14px;">รอ api </p>
+    <v-col cols="6" v-if="profile">
+        <h4 class="mt-2">{{ profile.first_name }}</h4>
+        <p style="font-size: 14px;">{{ profile.position }} </p>
     </v-col>
     </v-row>
     <v-divider class="mt-3"></v-divider>
       <v-list dense nav class="menu-list">
         <v-list-item prepend-icon="mdi-home" title="หน้าแรก" to="/home" />
-        <v-list-item prepend-icon="mdi-home" title="เพิ่มรายการทรัพย์สิน" to="/addassets" />
+        <v-list-item prepend-icon="mdi-view-dashboard" title="แดชบอร์ด" to="/dashboard" v-if="profile?.role_name === 'Admin'"/>
+        <v-list-item prepend-icon="mdi-plus" title="เพิ่มรายการทรัพย์สิน" to="/addassets" v-if="profile?.role_name === 'Admin'"/>
+        <v-list-item prepend-icon="mdi-file-document-edit" title="จัดการทรัพย์สิน" to="/addassetsetting" />
+        <v-list-item prepend-icon="mdi-finance" title="บัญชีทรัพย์สิน" to="/fixdasset" v-if="profile?.role_name === 'Admin'"/>
+        <v-list-item prepend-icon="mdi-account-group" title="พนักงาน" to="/employee" v-if="profile?.role_name === 'Admin'"/>
+        <v-list-item prepend-icon="mdi-archive-outline" title="ประวัติรายการเบิก" to="/borrowhistory" />
+        <v-list-item prepend-icon="mdi-tools" title="รายการแจ้งซ่อมบำรุง" to="/maintenance"  v-if="['Admin', 'ช่างซ่อมบำรุง'].includes(profile?.role_name)"/>
+        <v-list-item prepend-icon="mdi-file-document-outline" title="คำร้องขอ" to="/adminrequest" v-if="profile?.role_name === 'Admin'"/>
+        <v-list-item prepend-icon="mdi-lock" title="กำหนดสิทธิ์" to="/adminSetpermission" v-if="profile?.role_name === 'Admin'"/>
       </v-list>
 
 
@@ -94,9 +102,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useDisplay } from "vuetify";
 import { useRouter } from "vue-router";
+import Swal from "sweetalert2";
+import axios from "axios";
 
 
 // ตรวจ breakpoint
@@ -128,7 +138,48 @@ async function logout() {
   router.push("/");
 }
 
+//จัดการสิทธิ์การเข้าถึง
 
+const profile = ref(null);
+
+async function fetchProfile() {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    await Swal.fire({
+      icon: 'warning',
+      title: 'ไม่พบข้อมูลการเข้าสู่ระบบ',
+      text: 'กรุณาล็อกอินก่อนใช้งาน',
+      confirmButtonText: 'ตกลง'
+    });
+    router.push('/');
+    return;
+  }
+
+  try {
+    const { data } = await axios.get(
+      `http://localhost:4512/api/login/profile`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    profile.value = data.user;
+    console.log('Profile:', profile.value);
+
+    // ลบส่วนเช็ค role_name ออกชั่วคราว
+    // if (profile.value.role_name !== 'Admin') { ... }
+
+
+  } catch (err) {
+    console.error(err);
+    await Swal.fire({
+      icon: 'error',
+      title: 'ไม่สามารถดึงข้อมูลโปรไฟล์ได้',
+      text: err.response?.data?.message || err.message,
+      confirmButtonText: 'ตกลง'
+    });
+    router.push('/');
+  }
+}
+
+onMounted(fetchProfile);
 
 </script>
 
