@@ -17,6 +17,12 @@ import Admin_Setpermission from "@/views/Admin_Setpermission.vue";
 import A_customerBorrow from "@/views/A_customerBorrow.vue";
 import A_Trackingasset from "@/views/A_Trackingasset.vue";
 import A_Customer_borrow_request from "@/views/A_Customer_borrow_request.vue";
+import A_itemsBorrowedByCustomers from "@/views/A_itemsBorrowedByCustomers.vue";
+import A_Customer_Repair from "@/views/A_Customer_Repair.vue";
+import A_awaiting_shipment from "@/views/A_awaiting_shipment.vue";
+import A_confirm_delivery_customerborrow from "@/views/A_confirm_delivery_customerborrow.vue";
+import A_QRscan from "@/views/A_QRscan.vue";
+import A_check_asset from "@/views/A_check_asset.vue";
 
 const routes = [
   { path: "/", name: "A_Login", component: A_Login },
@@ -40,7 +46,12 @@ const routes = [
   { path: "/customerborrow", name: "A_customerBorrow", component: A_customerBorrow },
   { path: "/trackingasset", name: "A_Trackingasset", component: A_Trackingasset },
   { path: "/customer_request", name: "A_Customer_borrow_request", component: A_Customer_borrow_request },
-
+  { path: "/customer_item", name: "A_itemsBorrowedByCustomers", component: A_itemsBorrowedByCustomers },
+  { path: "/customer_repair", name: "A_Customer_Repair", component: A_Customer_Repair },
+  { path: "/customer_awaiting_shipment", name: "A_awaiting_shipment", component: A_awaiting_shipment },
+  { path: "/confrim_customer_borrow", name: "A_confirm_delivery_customerborrow", component: A_confirm_delivery_customerborrow },
+  { path: "/qr-scan", name: "A_QRscan", component: A_QRscan },
+  { path: "/check-asset", name: "A_check_asset", component: A_check_asset },
 ];
 
 const router = createRouter({

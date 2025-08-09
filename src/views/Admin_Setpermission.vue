@@ -75,7 +75,7 @@
         />
         <v-select
           v-model="form.role_id"
-          label="บทบาท (Role)"
+          label="สิทธเข้าใช้งานในตำแหน่ง"
           :items="roles"
           item-title="role_name"
           item-value="role_id"
@@ -83,8 +83,8 @@
           variant="outlined"
         />
         <v-card-actions class="justify-end mt-4">
-          <v-btn text="ยกเลิก" @click="permissionDialog = false" />
-          <v-btn color="primary" type="submit" text="บันทึก" />
+          <v-btn variant="outlined" color="red" text="ยกเลิก" @click="permissionDialog = false" />
+          <v-btn variant="outlined" color="green" type="submit" text="บันทึก" />
         </v-card-actions>
       </v-form>
     </v-card-text>
@@ -123,7 +123,7 @@ const fetchRoles = async () => {
       roles.value = data.result;
     }
   } catch (error) {
-    console.error("❌ ดึงบทบาทล้มเหลว:", error);
+    console.error(" ดึงบทบาทล้มเหลว:", error);
   }
 };
 
@@ -176,7 +176,7 @@ const submitPermission = async () => {
       permissionDialog.value = false
       alert("✅ เพิ่มผู้ใช้งานสำเร็จ")
     } else {
-      alert("❌ เพิ่มไม่สำเร็จ: " + data.message)
+      alert("เพิ่มไม่สำเร็จ: " + data.message)
     }
   } catch (error) {
     console.error("เพิ่มผู้ใช้งานล้มเหลว:", error)

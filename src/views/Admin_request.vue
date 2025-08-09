@@ -23,7 +23,9 @@
             </v-btn>
 
             <v-btn value="customer" color="yellow">
-              <v-icon start>mdi-swap-horizontal</v-icon> ยืม ({{ 0 }})
+              <v-icon start>mdi-swap-horizontal</v-icon> ยืม ({{
+                customerCount
+              }})
             </v-btn>
 
             <v-btn value="return" color="info">
@@ -87,8 +89,52 @@
 
             <v-window-item value="customer">
               <div class="pa-4">
-                <h2>รายการยืม</h2>
-                <p>แสดงเฉพาะรายการยืม</p>
+                <h2>รายการคำขอยืมจากลูกค้า</h2>
+                <v-row>
+                  <v-col cols="12" md="8" lg="12" class="mt-5">
+                    <v-card>
+                      <v-data-table
+                        :headers="customerHeaders"
+                        :items="customerRequests"
+                        item-value="customerborrow_request_id"
+                        class="elevation-1 mt-5"
+                        density="comfortable"
+                      >
+                        <template v-slot:[`item.customer_name`]="{ item }">
+                          {{ item.customer_firstname }}
+                          {{ item.customer_lastname }}
+                        </template>
+                        <template v-slot:[`item.actions`]="{ item }">
+                          <div class="d-flex justify-center" style="gap: 8px">
+                            <v-btn
+                              color="success"
+                              size="small"
+                              @click="
+                                approveCustomerBorrow(
+                                  item.customerborrow_request_id,
+                                  item.asset_id
+                                )
+                              "
+                            >
+                              อนุมัติ
+                            </v-btn>
+                            <v-btn
+                              color="error"
+                              size="small"
+                              @click="
+                                rejectCustomerBorrow(
+                                  item.customerborrow_request_id
+                                )
+                              "
+                            >
+                              ไม่อนุมัติ
+                            </v-btn>
+                          </div>
+                        </template>
+                      </v-data-table>
+                    </v-card>
+                  </v-col>
+                </v-row>
               </div>
             </v-window-item>
 
@@ -201,9 +247,7 @@ const approve = async (borrow_request_id, asset_id) => {
 
 const reject = async (id) => {
   console.log("ไม่อนุมัติคำขอเบิก ID:", id);
-  
 };
-
 
 onMounted(fetchDataBorrow);
 //
@@ -222,8 +266,6 @@ const returnHeaders = [
   { title: "สถานะ", key: "status" },
   { title: "การจัดการ", key: "actions", sortable: false },
 ];
-
-
 
 const fetchDataReturn = async () => {
   try {
@@ -254,9 +296,12 @@ const confirmReturn = async (item) => {
 
   if (confirm.isConfirmed) {
     try {
-      const res = await axios.post("http://localhost:4512/api/borrow_request/adminapproveReturn", {
-        borrow_request_id: item.borrow_request_id
-      });
+      const res = await axios.post(
+        "http://localhost:4512/api/borrow_request/adminapproveReturn",
+        {
+          borrow_request_id: item.borrow_request_id,
+        }
+      );
       console.log(res.data.message);
       Swal.fire({
         icon: "success",
@@ -279,6 +324,81 @@ const confirmReturn = async (item) => {
 
 onMounted(() => {
   fetchDataReturn();
+});
+//
+
+//รานการคำขอยืม
+const customerCount = ref(0);
+const customerRequests = ref([]);
+const customerHeaders = [
+  { title: "รหัสคำขอ", key: "customerborrow_request_id" },
+  { title: "รหัสทรัพย์สิน", key: "asset_code" },
+  { title: "ชื่อทรัพย์สิน", key: "asset_name" },
+  { title: "ลูกค้า", key: "customer_name" },
+  { title: "สถานะ", key: "status" },
+  { title: "การจัดการ", key: "actions", sortable: false, align: "center" },
+];
+
+const fetchCustomerRequests = async () => {
+  try {
+    const res = await axios.get(
+      "http://localhost:4512/api/customer/getRequestcustomerborrow"
+    );
+    customerRequests.value = res.data.data;
+    const data = res.data.data;
+    customerRequests.value = data;
+    customerCount.value = data.filter(
+      (item) => item.status === "รออนุมัติ"
+    ).length;
+  } catch (error) {
+    console.error("โหลดข้อมูลคำขอยืมลูกค้าล้มเหลว:", error);
+  }
+};
+
+const approveCustomerBorrow = async (requestId) => {
+  try {
+    const res = await axios.post(
+      "http://localhost:4512/api/customer/approveCustomerBorrowRequest",
+      {
+        customerborrow_request_id: requestId,
+      }
+    );
+
+    if (res.data.status === "success") {
+      await Swal.fire({
+        icon: "success",
+        title: "อนุมัติสำเร็จ",
+        text: res.data.message || "ระบบได้อนุมัติคำขอยืมแล้ว",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      // รีเฟรชรายการหลังจากอนุมัติ
+      fetchCustomerRequests();
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "ไม่สามารถอนุมัติได้",
+        text: res.data.message || "กรุณาลองใหม่อีกครั้ง",
+      });
+    }
+  } catch (error) {
+    console.error("เกิดข้อผิดพลาดในการอนุมัติ:", error);
+    Swal.fire({
+      icon: "error",
+      title: "เกิดข้อผิดพลาด",
+      text:
+        error?.response?.data?.message || "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้",
+    });
+  }
+};
+
+const rejectCustomerBorrow = async (requestId) => {
+  console.log("ไม่อนุมัติคำขอยืมลูกค้า ID:", requestId);
+};
+
+onMounted(() => {
+  fetchCustomerRequests();
 });
 //
 </script>

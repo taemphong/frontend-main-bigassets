@@ -142,6 +142,7 @@ const headers = [
 ];
 
 const getImageUrl = (imagePath) => {
+  if (!imagePath) return "/defaultImage.png"; 
   return `http://localhost:4512/${imagePath.replaceAll("\\", "/")}`;
 };
 

@@ -26,18 +26,16 @@
                     >
                       <l-popup>
                         <div>
-                          <strong>ทรัพย์สิน:</strong> {{ track.asset_id }}<br />
-                          <strong>คำอธิบาย:</strong>
-                          {{ track.location_description }}<br />
-                          <strong>เวลาที่บันทึก:</strong>
-                          {{ formatDate(track.captured_at) }}<br />
+                          <strong>ทรัพย์สิน:</strong>
+                          {{ track.asset_name || "ไม่ทราบชื่อ" }}<br />
+                          <strong>ที่อยู่:</strong> {{ track.manual_address
+                          }}<br />
                           <a
                             :href="track.map_url"
                             target="_blank"
                             rel="noopener"
+                            >🌐 เปิดใน Google Maps</a
                           >
-                            🌐 เปิดใน Google Maps
-                          </a>
                         </div>
                       </l-popup>
                     </l-marker>
@@ -58,6 +56,7 @@
 <script setup>
 import Layout from "@/components/AssetsLayout.vue";
 import { ref, onMounted } from "vue";
+import axios from "axios";
 import { LMap, LTileLayer, LMarker, LPopup } from "@vue-leaflet/vue-leaflet";
 
 // Bangkok default center
@@ -67,51 +66,36 @@ const defaultLng = 100.5018;
 const mapReady = ref(false);
 const trackings = ref([]);
 
-// ✅ ฟอร์แมตวันที่ให้อ่านง่าย
-const formatDate = (date) => {
-  return new Date(date).toLocaleString("th-TH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-// ✅ mock data จำลอง asset_tracking
-onMounted(() => {
-  trackings.value = [
-    {
-      tracking_id: 1,
-      asset_id: 1001,
-      customer_borrowrequest_id: 501,
-      map_url: "https://maps.google.com/?q=13.7563,100.5018",
-      latitude: 13.7563,
-      longitude: 100.5018,
-      location_description: "หน้าร้าน BAKE56 สาขาบางแค",
-      captured_at: "2025-07-24T09:30:00Z",
-    },
-    {
-      tracking_id: 2,
-      asset_id: 1002,
-      customer_borrowrequest_id: 502,
-      map_url: "https://maps.google.com/?q=13.7456,100.5398",
-      latitude: 13.7456,
-      longitude: 100.5398,
-      location_description: "ลูกค้ารับของที่พระราม 3",
-      captured_at: "2025-07-24T10:00:00Z",
-    },
-    {
-      tracking_id: 3,
-      asset_id: 1003,
-      customer_borrowrequest_id: 503,
-      map_url: "https://maps.google.com/?q=13.7891,100.6078",
-      latitude: 13.7891,
-      longitude: 100.6078,
-      location_description: "ส่งของที่สุขุมวิท 103",
-      captured_at: "2025-07-24T10:45:00Z",
-    },
-  ];
-  mapReady.value = true;
+// ✅ โหลดข้อมูลจาก API จริง
+onMounted(async () => {
+  try {
+    const res = await axios.get(
+      "http://localhost:4512/api/customer/getLocation"
+    );
+    if (res.data.status === "success") {
+      console.log("ข้อมูลติดตามทรัพย์สิน:", res.data.data);
+      trackings.value = res.data.data
+  .filter(
+    (item) =>
+      item.latitude &&
+      item.longitude &&
+      !isNaN(parseFloat(item.latitude)) &&
+      !isNaN(parseFloat(item.longitude))
+  )
+  .map((item, index) => ({
+    tracking_id: index + 1,
+    asset_id: item.asset_id,
+    asset_name: item.asset_name,
+    latitude: parseFloat(item.latitude),
+    longitude: parseFloat(item.longitude),
+    map_url: item.map_url,
+    manual_address: item.manual_address,
+    captured_at: new Date().toISOString(),
+  }));
+    }
+    mapReady.value = true;
+  } catch (err) {
+    console.error("โหลดแผนที่ล้มเหลว:", err);
+  }
 });
 </script>
