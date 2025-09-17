@@ -187,6 +187,7 @@ const viewAsset = (item) => {
   selectedAsset.value = item;
   dialogassetDetail.value = true;
   console.log("asset_id:", item.asset_id);
+  console.log("asset", item)
 };
 
 //qrcode
